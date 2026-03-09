@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ice Cream Sales Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:    #FFF8F0;
+      --peach:    #FFCBA4;
+      --coral:    #FF7B54;
+      --berry:    #C0392B;
+      --mint:     #A8E6CF;
+      --choc:     #3E1F00;
+      --caramel:  #D4884A;
+      --shadow:   rgba(62,31,0,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--choc);
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%,  #FFE0CC88 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, #FFDDE155 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 50%,  #A8E6CF22 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── FLOATING SCOOPS (decorative) ── */
+    .deco {
+      position: fixed; z-index: 0; opacity: .18; font-size: 4rem;
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none; user-select: none;
+    }
+    .deco:nth-child(1)  { top: 8%;  left: 4%;   animation-delay: 0s;   font-size: 3rem; }
+    .deco:nth-child(2)  { top: 70%; left: 2%;   animation-delay: 1.2s; font-size: 5rem; }
+    .deco:nth-child(3)  { top: 20%; right: 5%;  animation-delay: 2s;   font-size: 4rem; }
+    .deco:nth-child(4)  { top: 80%; right: 3%;  animation-delay: 0.7s; font-size: 2.8rem; }
+    .deco:nth-child(5)  { top: 45%; right: 1%;  animation-delay: 3s;   font-size: 3.5rem; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50%       { transform: translateY(-18px) rotate(4deg); }
+    }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── HEADER ── */
+    header { text-align: center; margin-bottom: 44px; }
+
+    .logo-icon {
+      font-size: 4.5rem; display: block;
+      animation: bounce 2.5s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      line-height: 1.1;
+      color: var(--berry);
+      margin-top: 12px;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--caramel);
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      font-size: .95rem;
+      color: var(--choc);
+      opacity: .6;
+      font-weight: 300;
+      letter-spacing: .02em;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff;
+      border-radius: 28px;
+      padding: 36px 32px;
+      box-shadow: 0 8px 48px var(--shadow), 0 2px 8px var(--shadow);
+      border: 1.5px solid rgba(255,123,84,.12);
+    }
+
+    /* ── FORM ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: .78rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--caramel);
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #EADDD5;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      color: var(--choc);
+      background: var(--cream);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23D4884A' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    select:focus, input:focus {
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px rgba(255,123,84,.15);
+    }
+
+    /* ── SLIDER SECTION ── */
+    .slider-row {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .slider-row input[type=range] {
+      flex: 1; padding: 0;
+      border: none; background: transparent;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px; border-radius: 4px;
+      background: linear-gradient(to right, var(--coral) 0%, var(--peach) 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--coral);
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin-top: -7px;
+      cursor: grab;
+    }
+    input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; }
+
+    .slider-value {
+      min-width: 52px; text-align: right;
+      font-size: .92rem; font-weight: 500;
+      color: var(--berry);
+    }
+
+    /* ── BUTTON ── */
+    .btn {
+      width: 100%;
+      margin-top: 28px;
+      padding: 16px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--coral) 0%, var(--berry) 100%);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: .03em;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 20px rgba(192,57,43,.3);
+    }
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(192,57,43,.4); }
+    .btn:active { transform: translateY(0); }
+    .btn .btn-icon { margin-right: 8px; }
+
+    /* ── LOADING ── */
+    .btn.loading { opacity: .7; pointer-events: none; }
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESULT ── */
+    .result-box {
+      display: none;
+      margin-top: 28px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #FFF0E8 0%, #FFE8D6 100%);
+      border: 1.5px solid rgba(255,123,84,.2);
+      padding: 28px 24px;
+      text-align: center;
+      animation: pop .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .result-box.visible { display: block; }
+
+    @keyframes pop {
+      from { transform: scale(.92); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .result-label {
+      font-size: .75rem; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--caramel); font-weight: 500;
+    }
+    .result-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 4rem; font-weight: 700;
+      color: var(--berry);
+      line-height: 1;
+      margin: 8px 0 4px;
+    }
+    .result-unit {
+      font-size: .9rem; color: var(--choc); opacity: .6;
+    }
+
+    .result-tags {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+      margin-top: 16px;
+    }
+    .tag {
+      padding: 5px 12px; border-radius: 20px;
+      background: rgba(255,123,84,.12);
+      color: var(--berry); font-size: .78rem; font-weight: 500;
+    }
+
+    /* ── ERROR ── */
+    .error-box {
+      display: none; margin-top: 20px;
+      background: #FFF0F0; border: 1.5px solid #FFCCCC;
+      border-radius: 14px; padding: 14px 18px;
+      color: #C0392B; font-size: .88rem;
+    }
+    .error-box.visible { display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; margin-top: 32px;
+      font-size: .78rem; color: var(--choc); opacity: .35;
+    }
+
+    @media (max-width: 420px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      .card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative floating icons -->
+  <span class="deco">🍦</span>
+  <span class="deco">🍨</span>
+  <span class="deco">🧁</span>
+  <span class="deco">🍧</span>
+  <span class="deco">🍡</span>
+
+  <div class="wrapper">
+    <header>
+      <span class="logo-icon">🍦</span>
+      <h1>Ice Cream<br/><em>Sales Predictor</em></h1>
+      <p class="subtitle">Enter today's conditions to forecast how many scoops you'll sell</p>
+    </header>
+
+    <div class="card">
+      <div class="form-grid">
+
+        <!-- Day of week -->
+        <div class="field">
+          <label>Day of Week</label>
+          <select id="dayOfWeek">
+            <option value="">Select day…</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+        </div>
+
+        <!-- Month -->
+        <div class="field">
+          <label>Month</label>
+          <select id="month">
+            <option value="">Select month…</option>
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+
+        <!-- Temperature -->
+        <div class="field full">
+          <label>Temperature (°F)</label>
+          <div class="slider-row">
+            <input type="range" id="tempSlider" min="20" max="110" value="72"
+                   oninput="document.getElementById('tempVal').textContent=this.value+'°F';
+                            document.getElementById('temperature').value=this.value"/>
+            <span class="slider-value" id="tempVal">72°F</span>
+          </div>
+          <input type="number" id="temperature" value="72" min="20" max="110" placeholder="e.g. 85"
+                 oninput="document.getElementById('tempSlider').value=this.value;
+                          document.getElementById('tempVal').textContent=this.value+'°F'"/>
+        </div>
+
+        <!-- Rainfall -->
+        <div class="field full">
+          <label>Rainfall (inches)</label>
+          <div class="slider-row">
+            <input type="range" id="rainSlider" min="0" max="5" step="0.01" value="0.2"
+                   oninput="document.getElementById('rainVal').textContent=parseFloat(this.value).toFixed(2)+' in';
+                            document.getElementById('rainfall').value=this.value"/>
+            <span class="slider-value" id="rainVal">0.20 in</span>
+          </div>
+          <input type="number" id="rainfall" value="0.2" min="0" max="5" step="0.01" placeholder="e.g. 0.3"
+                 oninput="document.getElementById('rainSlider').value=this.value;
+                          document.getElementById('rainVal').textContent=parseFloat(this.value).toFixed(2)+' in'"/>
+        </div>
+
+      </div><!-- /form-grid -->
+
+      <button class="btn" id="predictBtn" onclick="predict()">
+        <span class="btn-icon">🔮</span> Predict Sales
+      </button>
+
+      <!-- Error -->
+      <div class="error-box" id="errorBox"></div>
+
+      <!-- Result -->
+      <div class="result-box" id="resultBox">
+        <div class="result-label">Estimated Ice Creams Sold</div>
+        <div class="result-number" id="resultNumber">—</div>
+        <div class="result-unit">units predicted</div>
+        <div class="result-tags" id="resultTags"></div>
+      </div>
+
+    </div><!-- /card -->
+
+    <footer>Powered by FastAPI · scikit-learn AutoML</footer>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin; // same host as FastAPI
+
+    async function predict() {
+      const day   = document.getElementById('dayOfWeek').value;
+      const month = document.getElementById('month').value;
+      const temp  = parseFloat(document.getElementById('temperature').value);
+      const rain  = parseFloat(document.getElementById('rainfall').value);
+
+      const errBox    = document.getElementById('errorBox');
+      const resultBox = document.getElementById('resultBox');
+      const btn       = document.getElementById('predictBtn');
+
+      errBox.classList.remove('visible');
+      resultBox.classList.remove('visible');
+
+      if (!day || !month || isNaN(temp) || isNaN(rain)) {
+        errBox.textContent = '⚠️ Please fill in all fields before predicting.';
+        errBox.classList.add('visible');
+        return;
+      }
+
+      // Loading state
+      btn.classList.add('loading');
+      btn.innerHTML = '<span class="spinner"></span>Predicting…';
+
+      try {
+        const res = await fetch(`${API_BASE}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            DayOfWeek: day,
+            Month: month,
+            Temperature: temp,
+            Rainfall: rain,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        document.getElementById('resultNumber').textContent = data.predicted_sales;
+
+        // Insight tags
+        const tags = [];
+        if (temp >= 85) tags.push('🌡️ Hot day boost');
+        if (rain === 0) tags.push('☀️ No rain');
+        else if (rain > 0.5) tags.push('🌧️ Rainy day dip');
+        if (day === 'Saturday' || day === 'Sunday') tags.push('🎉 Weekend surge');
+        if (['June','July','August'].includes(month)) tags.push('☀️ Peak season');
+        document.getElementById('resultTags').innerHTML =
+          tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+        resultBox.classList.add('visible');
+
+      } catch (e) {
+        errBox.textContent = `❌ ${e.message}`;
+        errBox.classList.add('visible');
+      } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span class="btn-icon">🔮</span> Predict Sales';
+      }
+    }
+  </script>
+</body>
+</html>
